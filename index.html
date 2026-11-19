@@ -114,7 +114,7 @@ header small{display:block;color:var(--muted);font-family:'Inter';font-size:13px
 .m-btn.save{background:var(--ink);color:var(--bg)}
 .m-btn.del{background:rgba(0,0,0,.08);opacity:1;color:#c0392b}
 
-#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
+#toast{position:fixed;left:50%;bottom:90px;width:max-content;max-width:90vw;text-align:center;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
 
 @keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
 @keyframes slide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
@@ -202,7 +202,7 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 function toast(msg){
   const t = document.createElement('div'); t.id='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
+  document.body.appendChild(t); setTimeout(()=>t.remove(),6000);
 }
 function ago(d){
   const s=(Date.now()-new Date(d))/1000;
@@ -267,7 +267,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
 /* ---------- COMPRA ---------- */
 async function loadItems(){
   const { data, error } = await sb.from('items').select('*').order('created_at',{ascending:false});
-  if(error){ toast('Error cargando la compra'); return; }
+  if(error){ toast('Compra: '+error.message); console.error(error); return; }
   items = data; renderItems();
 }
 function itemEl(it){
@@ -296,7 +296,7 @@ $('#addForm').addEventListener('submit', async e=>{
   const inp=$('#newItem'), text=inp.value.trim(); if(!text) return;
   inp.value='';
   const { error } = await sb.from('items').insert({ text, author:nameOf(user) });
-  if(error) toast('No se pudo añadir');
+  if(error){ toast('No se pudo añadir: '+error.message); console.error(error); }
 });
 $('#clearDone').addEventListener('click', async ()=>{
   const { error } = await sb.from('items').delete().eq('done',true);
@@ -306,7 +306,7 @@ $('#clearDone').addEventListener('click', async ()=>{
 /* ---------- NOTAS ---------- */
 async function loadNotes(){
   const { data, error } = await sb.from('notes').select('*').order('updated_at',{ascending:false});
-  if(error){ toast('Error cargando las notas'); return; }
+  if(error){ toast('Notas: '+error.message); console.error(error); return; }
   notes=data; renderNotes();
 }
 function renderNotes(){
@@ -344,7 +344,7 @@ function openNote(n){
     if(!title && !body){ close(); return; }
     const row={ title, body, color, author:nameOf(user), updated_at:new Date().toISOString() };
     const { error } = n ? await sb.from('notes').update(row).eq('id',n.id) : await sb.from('notes').insert(row);
-    if(error) toast('No se pudo guardar'); else close();
+    if(error){ toast('No se pudo guardar: '+error.message); console.error(error); } else close();
   };
   const del=m.querySelector('[data-a=del]');
   if(del) del.onclick=async()=>{
