@@ -213,7 +213,7 @@ function ago(d){
 }
 
 // Supabase exige un correo; el usuario escribe solo su nombre y aquí se le añade un dominio interno.
-const LOGIN_DOMAIN = 'familia.com';
+const LOGIN_DOMAIN = 'familia.app';
 const toEmail = v => {
   v = v.trim().toLowerCase();
   if (v.includes('@')) return v;
@@ -278,9 +278,19 @@ function itemEl(it){
   const by=document.createElement('div'); by.className='by'; by.textContent=`${cap(it.author||'alguien')} · ${ago(it.created_at)}`;
   mid.append(t,by);
   const x=document.createElement('button'); x.className='del'; x.textContent='✕'; x.setAttribute('aria-label','Borrar');
-  const toggle=()=>sb.from('items').update({done:!it.done}).eq('id',it.id).then(({error})=>error&&toast('Error'));
+  const toggle=async()=>{
+    it.done=!it.done; renderItems();                       // se ve al instante
+    const { error } = await sb.from('items').update({done:it.done}).eq('id',it.id);
+    if(error) toast('Error: '+error.message);
+    loadItems();
+  };
   c.onclick=toggle; t.onclick=toggle;
-  x.onclick=()=>sb.from('items').delete().eq('id',it.id).then(({error})=>error&&toast('Error'));
+  x.onclick=async()=>{
+    items=items.filter(i=>i.id!==it.id); renderItems();    // desaparece al instante
+    const { error } = await sb.from('items').delete().eq('id',it.id);
+    if(error) toast('Error: '+error.message);
+    loadItems();
+  };
   d.append(c,mid,x); return d;
 }
 function renderItems(){
@@ -295,12 +305,17 @@ $('#addForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const inp=$('#newItem'), text=inp.value.trim(); if(!text) return;
   inp.value='';
+  const temp={ id:'tmp-'+Date.now(), text, done:false, author:nameOf(user), created_at:new Date().toISOString() };
+  items.unshift(temp); renderItems();                      // se ve al instante
   const { error } = await sb.from('items').insert({ text, author:nameOf(user) });
   if(error){ toast('No se pudo añadir: '+error.message); console.error(error); }
+  loadItems();
 });
 $('#clearDone').addEventListener('click', async ()=>{
+  items=items.filter(i=>!i.done); renderItems();
   const { error } = await sb.from('items').delete().eq('done',true);
-  if(error) toast('Error');
+  if(error) toast('Error: '+error.message);
+  loadItems();
 });
 
 /* ---------- NOTAS ---------- */
@@ -344,16 +359,18 @@ function openNote(n){
     if(!title && !body){ close(); return; }
     const row={ title, body, color, author:nameOf(user), updated_at:new Date().toISOString() };
     const { error } = n ? await sb.from('notes').update(row).eq('id',n.id) : await sb.from('notes').insert(row);
-    if(error){ toast('No se pudo guardar: '+error.message); console.error(error); } else close();
+    if(error){ toast('No se pudo guardar: '+error.message); console.error(error); } else { close(); loadNotes(); }
   };
   const del=m.querySelector('[data-a=del]');
   if(del) del.onclick=async()=>{
     const { error } = await sb.from('notes').delete().eq('id',n.id);
-    if(error) toast('No se pudo borrar'); else close();
+    if(error) toast('No se pudo borrar: '+error.message); else { close(); loadNotes(); }
   };
   ov.appendChild(m); root.appendChild(ov); paint();
   m.querySelector(n?'textarea':'.t').focus();
 }
+
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && user){ loadItems(); loadNotes(); } });
 
 init();
 </script>
