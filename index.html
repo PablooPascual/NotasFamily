@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fdf4e3">
+<title>Familia</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Familia">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f6f1e9; --card:#fffdf9; --ink:#2b2622; --muted:#8a7f74; --line:#e8dfd2;
+  --accent:#e2603f; --accent-ink:#fff; --ok:#5b8c5a;
+  --n-yellow:#fff1b8; --n-pink:#ffd9d4; --n-green:#d8efd3; --n-blue:#d6e6f7; --n-purple:#e6dcf5;
+  --shadow:0 2px 0 rgba(0,0,0,.04),0 8px 24px rgba(60,40,20,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#1b1815; --card:#262220; --ink:#f3ece3; --muted:#a09486; --line:#3a342f;
+    --accent:#ee7352; --shadow:0 8px 24px rgba(0,0,0,.35);
+    --n-yellow:#5c5124; --n-pink:#5e332f; --n-green:#2f4a2c; --n-blue:#2b4054; --n-purple:#443759;
+  }
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  background-image:radial-gradient(circle at 15% 0%,rgba(226,96,63,.10),transparent 40%),radial-gradient(circle at 100% 100%,rgba(91,140,90,.10),transparent 40%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',serif;letter-spacing:-.02em}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.hidden{display:none!important}
+
+/* LOGIN */
+#login{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px 26px 26px}
+.login-card .brand{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.login-card h1{font-size:28px;margin-bottom:6px}
+.login-card .sub{color:var(--muted);font-size:14px;line-height:1.4;margin-bottom:28px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);outline:none;font-size:16px;transition:border-color .15s}
+.field input:focus{border-color:var(--ink)}
+.btn{width:100%;padding:14px;border-radius:10px;background:var(--ink);color:var(--bg);font-weight:600;font-size:15px;margin-top:8px;transition:opacity .15s}
+.btn:active{opacity:.85}
+.btn:disabled{opacity:.5;cursor:wait}
+.error{color:#c0392b;font-size:13px;margin-top:14px;min-height:18px}
+
+/* APP */
+#app{max-width:760px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px 120px}
+header{display:flex;align-items:center;justify-content:space-between;margin:8px 0 22px}
+header h1{font-size:30px}
+header small{display:block;color:var(--muted);font-family:'Inter';font-size:13px;margin-top:2px}
+.who{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.logout{font-size:13px;color:var(--muted);padding:8px 12px;border-radius:10px;border:1px solid var(--line)}
+.logout:hover{color:var(--ink)}
+
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:5px;gap:4px;margin-bottom:22px;box-shadow:var(--shadow)}
+.tab{flex:1;padding:12px;border-radius:12px;font-weight:600;color:var(--muted);transition:.2s}
+.tab.active{background:var(--accent);color:#fff}
+
+.add{display:flex;gap:10px;margin-bottom:18px}
+.add input{flex:1;padding:15px 18px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:16px}
+.add input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(226,96,63,.15)}
+.add button{width:54px;border-radius:16px;background:var(--accent);color:#fff;font-size:26px;font-weight:500}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:22px 4px 10px;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.link{color:var(--accent);font-size:13px;font-weight:600;text-transform:none;letter-spacing:0}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;animation:slide .25s ease}
+.check{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex-shrink:0;transition:.15s;color:transparent;font-size:14px}
+.item:hover .check{border-color:var(--accent)}
+.item.done .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.item .txt{flex:1;font-size:16px;word-break:break-word;cursor:pointer}
+.item.done .txt{text-decoration:line-through;color:var(--muted)}
+.item .by{font-size:11px;color:var(--muted)}
+.del{color:var(--muted);font-size:18px;padding:4px 8px;border-radius:8px;opacity:.5}
+.del:hover{opacity:1;color:#c0392b}
+
+.notes{columns:2;column-gap:12px}
+.note{break-inside:avoid;margin-bottom:12px;border-radius:18px;padding:14px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s;animation:pop .3s ease;border:1px solid rgba(0,0,0,.05)}
+.note:active{transform:scale(.97)}
+.note h3{font-size:17px;line-height:1.2;margin-bottom:6px;overflow-wrap:anywhere}
+.note p{white-space:pre-wrap;font-size:14px;line-height:1.4;overflow-wrap:anywhere;opacity:.9;display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
+.note footer{margin-top:12px;font-size:11px;opacity:.6}
+.c-yellow{background:var(--n-yellow)}.c-pink{background:var(--n-pink)}.c-green{background:var(--n-green)}.c-blue{background:var(--n-blue)}.c-purple{background:var(--n-purple)}
+
+.empty{text-align:center;color:var(--muted);padding:44px 10px}
+.empty .big{font-size:46px;display:block;margin-bottom:8px}
+
+.fab{position:fixed;right:22px;bottom:max(22px,env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;font-size:32px;box-shadow:0 10px 28px rgba(226,96,63,.45);transition:transform .15s}
+.fab:hover{transform:scale(1.07) rotate(90deg)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(20,12,5,.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:10;animation:fade .2s}
+.modal{width:100%;max-width:520px;min-width:0;border-radius:26px 26px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:up .3s cubic-bezier(.2,.9,.3,1)}
+.modal input.t{width:100%;background:transparent;border:0;outline:0;font-family:'Fraunces',serif;font-weight:800;font-size:26px;margin-bottom:10px}
+.modal textarea{width:100%;height:32vh;height:32dvh;min-height:120px;max-height:320px;background:transparent;border:0;outline:0;resize:vertical;font-size:16px;line-height:1.5}
+.modal ::placeholder{color:currentColor;opacity:.4}
+.m-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.swatches{display:flex;gap:8px;flex:1 1 100%}
+.sw{width:32px;height:32px;border-radius:50%;border:2px solid rgba(0,0,0,.15)}
+.sw.sel{outline:3px solid var(--ink);outline-offset:2px}
+.m-btn{flex:1;padding:13px 18px;border-radius:12px;font-weight:600;font-size:14px}
+.m-btn.save{background:var(--ink);color:var(--bg)}
+.m-btn.del{background:rgba(0,0,0,.08);opacity:1;color:#c0392b}
+
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;z-index:20;box-shadow:var(--shadow)}
+
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes slide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes wiggle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section id="login" class="hidden">
+  <form class="login-card" id="loginForm">
+    <div class="brand">Familia</div>
+    <h1>Iniciar sesión</h1>
+    <p class="sub">Acceso privado. Entra con tu nombre de usuario; en este móvil solo tendrás que hacerlo una vez.</p>
+    <div class="field"><label for="email">Usuario</label>
+      <input id="email" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="mama, pablo…" required></div>
+    <div class="field"><label for="password">Contraseña</label>
+      <input id="password" type="password" autocomplete="current-password" required></div>
+    <button class="btn" id="loginBtn" type="submit">Entrar</button>
+    <div class="error" id="loginError"></div>
+  </form>
+</section>
+
+<!-- ============ APP ============ -->
+<main id="app" class="hidden">
+  <header>
+    <div><h1>Familia</h1><small id="hello"></small></div>
+    <div class="who">
+      <div class="avatar" id="avatar">?</div>
+      <button class="logout" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="compra">🛒 Compra</button>
+    <button class="tab" data-tab="notas">📝 Notas</button>
+  </div>
+
+  <!-- COMPRA -->
+  <section id="tab-compra">
+    <form class="add" id="addForm">
+      <input id="newItem" placeholder="Añadir a la compra… (leche, pan…)" autocomplete="off" maxlength="120">
+      <button type="submit" aria-label="Añadir">+</button>
+    </form>
+    <div id="pending" class="list"></div>
+    <div id="doneWrap" class="hidden">
+      <div class="section-title"><span>Ya comprado</span><button class="link" id="clearDone">Vaciar</button></div>
+      <div id="done" class="list"></div>
+    </div>
+    <div id="emptyItems" class="empty hidden"><span class="big">🧺</span>No falta nada. ¡Qué raro!</div>
+  </section>
+
+  <!-- NOTAS -->
+  <section id="tab-notas" class="hidden">
+    <div id="notes" class="notes"></div>
+    <div id="emptyNotes" class="empty hidden"><span class="big">🗒️</span>Aún no hay notas. Pulsa + para crear una.</div>
+    <button class="fab" id="fab" aria-label="Nueva nota">+</button>
+  </section>
+</main>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ======================================================
+   ⚙️ CONFIGURACIÓN: pega aquí los datos de tu proyecto Supabase
+   (Project Settings → API). La "anon key" es pública por diseño;
+   la seguridad la da el RLS que crea supabase-setup.sql
+   ====================================================== */
+const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TU_ANON_PUBLIC_KEY';
+/* ====================================================== */
+
+// La sesión se guarda en este dispositivo y se renueva sola: solo hay que iniciar sesión una vez.
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
+const $ = s => document.querySelector(s);
+const COLORS = ['yellow','pink','green','blue','purple'];
+let user = null, items = [], notes = [], channel = null;
+
+const nameOf = u => (u?.email || '?').split('@')[0];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+function toast(msg){
+  const t = document.createElement('div'); t.id='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
+}
+function ago(d){
+  const s=(Date.now()-new Date(d))/1000;
+  if(s<60) return 'ahora mismo';
+  if(s<3600) return `hace ${Math.floor(s/60)} min`;
+  if(s<86400) return `hace ${Math.floor(s/3600)} h`;
+  return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+}
+
+// Supabase exige un correo; el usuario escribe solo su nombre y aquí se le añade un dominio interno.
+const LOGIN_DOMAIN = 'familia.app';
+const toEmail = v => {
+  v = v.trim().toLowerCase();
+  if (v.includes('@')) return v;
+  return v.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'') + '@' + LOGIN_DOMAIN;
+};
+
+/* ---------- AUTH ---------- */
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  session ? enterApp(session.user) : showLogin();
+  sb.auth.onAuthStateChange((ev, s)=>{
+    if(ev==='SIGNED_OUT') showLogin();
+  });
+}
+function showLogin(){
+  user=null; if(channel){ sb.removeChannel(channel); channel=null; }
+  $('#app').classList.add('hidden'); $('#login').classList.remove('hidden');
+}
+$('#loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const btn=$('#loginBtn'), err=$('#loginError');
+  btn.disabled=true; btn.textContent='Entrando…'; err.textContent='';
+  const { data, error } = await sb.auth.signInWithPassword({
+    email:toEmail($('#email').value), password:$('#password').value
+  });
+  btn.disabled=false; btn.textContent='Entrar';
+  if(error){ err.textContent = 'Correo o contraseña incorrectos.'; return; }
+  enterApp(data.user);
+});
+$('#logoutBtn').addEventListener('click', ()=>sb.auth.signOut());
+
+async function enterApp(u){
+  user=u;
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#avatar').textContent = nameOf(u)[0].toUpperCase();
+  $('#hello').textContent = `Hola, ${cap(nameOf(u))}`;
+  await Promise.all([loadItems(), loadNotes()]);
+  channel = sb.channel('familia')
+    .on('postgres_changes',{event:'*',schema:'public',table:'items'},loadItems)
+    .on('postgres_changes',{event:'*',schema:'public',table:'notes'},loadNotes)
+    .subscribe();
+}
+
+/* ---------- TABS ---------- */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  $('#tab-compra').classList.toggle('hidden', b.dataset.tab!=='compra');
+  $('#tab-notas').classList.toggle('hidden', b.dataset.tab!=='notas');
+}));
+
+/* ---------- COMPRA ---------- */
+async function loadItems(){
+  const { data, error } = await sb.from('items').select('*').order('created_at',{ascending:false});
+  if(error){ toast('Error cargando la compra'); return; }
+  items = data; renderItems();
+}
+function itemEl(it){
+  const d=document.createElement('div'); d.className='item'+(it.done?' done':'');
+  const c=document.createElement('button'); c.className='check'; c.textContent='✓'; c.setAttribute('aria-label','Marcar');
+  const mid=document.createElement('div'); mid.style.flex='1';
+  const t=document.createElement('div'); t.className='txt'; t.textContent=it.text;
+  const by=document.createElement('div'); by.className='by'; by.textContent=`${cap(it.author||'alguien')} · ${ago(it.created_at)}`;
+  mid.append(t,by);
+  const x=document.createElement('button'); x.className='del'; x.textContent='✕'; x.setAttribute('aria-label','Borrar');
+  const toggle=()=>sb.from('items').update({done:!it.done}).eq('id',it.id).then(({error})=>error&&toast('Error'));
+  c.onclick=toggle; t.onclick=toggle;
+  x.onclick=()=>sb.from('items').delete().eq('id',it.id).then(({error})=>error&&toast('Error'));
+  d.append(c,mid,x); return d;
+}
+function renderItems(){
+  const p=$('#pending'), dn=$('#done'); p.innerHTML=''; dn.innerHTML='';
+  const pend=items.filter(i=>!i.done), done=items.filter(i=>i.done);
+  pend.forEach(i=>p.appendChild(itemEl(i)));
+  done.forEach(i=>dn.appendChild(itemEl(i)));
+  $('#doneWrap').classList.toggle('hidden', !done.length);
+  $('#emptyItems').classList.toggle('hidden', items.length>0);
+}
+$('#addForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const inp=$('#newItem'), text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  const { error } = await sb.from('items').insert({ text, author:nameOf(user) });
+  if(error) toast('No se pudo añadir');
+});
+$('#clearDone').addEventListener('click', async ()=>{
+  const { error } = await sb.from('items').delete().eq('done',true);
+  if(error) toast('Error');
+});
+
+/* ---------- NOTAS ---------- */
+async function loadNotes(){
+  const { data, error } = await sb.from('notes').select('*').order('updated_at',{ascending:false});
+  if(error){ toast('Error cargando las notas'); return; }
+  notes=data; renderNotes();
+}
+function renderNotes(){
+  const box=$('#notes'); box.innerHTML='';
+  notes.forEach(n=>{
+    const d=document.createElement('div'); d.className=`note c-${n.color||'yellow'}`;
+    if(n.title){ const h=document.createElement('h3'); h.textContent=n.title; d.appendChild(h); }
+    const p=document.createElement('p'); p.textContent=n.body||''; d.appendChild(p);
+    const f=document.createElement('footer'); f.textContent=`${cap(n.author||'alguien')} · ${ago(n.updated_at)}`; d.appendChild(f);
+    d.onclick=()=>openNote(n); box.appendChild(d);
+  });
+  $('#emptyNotes').classList.toggle('hidden', notes.length>0);
+}
+$('#fab').addEventListener('click',()=>openNote(null));
+
+function openNote(n){
+  let color = n?.color || 'yellow';
+  const root=$('#modalRoot');
+  const ov=document.createElement('div'); ov.className='overlay';
+  const m=document.createElement('div'); m.className='modal';
+  const paint=()=>{ m.className=`modal c-${color}`; m.querySelectorAll('.sw').forEach(s=>s.classList.toggle('sel',s.dataset.c===color)); };
+  m.innerHTML=`<input class="t" placeholder="Título" maxlength="80">
+    <textarea placeholder="Escribe aquí…"></textarea>
+    <div class="m-actions"><div class="swatches"></div>
+      ${n?'<button class="m-btn del" data-a="del">Borrar</button>':''}
+      <button class="m-btn save" data-a="save">Guardar</button></div>`;
+  m.querySelector('.t').value=n?.title||''; m.querySelector('textarea').value=n?.body||'';
+  const sw=m.querySelector('.swatches');
+  COLORS.forEach(c=>{ const b=document.createElement('button'); b.type='button'; b.className=`sw c-${c}`; b.dataset.c=c;
+    b.onclick=()=>{color=c;paint();}; sw.appendChild(b); });
+  const close=()=>ov.remove();
+  ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  m.querySelector('[data-a=save]').onclick=async()=>{
+    const title=m.querySelector('.t').value.trim(), body=m.querySelector('textarea').value.trim();
+    if(!title && !body){ close(); return; }
+    const row={ title, body, color, author:nameOf(user), updated_at:new Date().toISOString() };
+    const { error } = n ? await sb.from('notes').update(row).eq('id',n.id) : await sb.from('notes').insert(row);
+    if(error) toast('No se pudo guardar'); else close();
+  };
+  const del=m.querySelector('[data-a=del]');
+  if(del) del.onclick=async()=>{
+    const { error } = await sb.from('notes').delete().eq('id',n.id);
+    if(error) toast('No se pudo borrar'); else close();
+  };
+  ov.appendChild(m); root.appendChild(ov); paint();
+  m.querySelector(n?'textarea':'.t').focus();
+}
+
+init();
+</script>
+</body>
+</html>
